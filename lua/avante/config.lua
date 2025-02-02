@@ -8,12 +8,12 @@ local M = {}
 ---@class avante.Config
 M._defaults = {
   debug = false,
-  ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "vertex" | "cohere" | "copilot" | string
-  provider = "claude", -- Only recommend using Claude
+  ---@alias Provider "ollama" | "claude" | "openai" | "azure" | "gemini" | "vertex" | "cohere" | "copilot" | string
+  provider = "ollama", -- Only recommend using Claude
   -- WARNING: Since auto-suggestions are a high-frequency operation and therefore expensive,
   -- currently designating it as `copilot` provider is dangerous because: https://github.com/yetone/avante.nvim/issues/1048
   -- Of course, you can reduce the request frequency by increasing `suggestion.debounce`.
-  auto_suggestions_provider = "claude",
+  auto_suggestions_provider = "ollam",
   ---@alias Tokenizer "tiktoken" | "hf"
   -- Used for counting tokens and encoding text.
   -- By default, we will use tiktoken.
@@ -21,6 +21,13 @@ M._defaults = {
   -- If you wish to use a given implementation, then you can override it here.
   tokenizer = "tiktoken",
   ---@type AvanteSupportedProvider
+  ollama = {
+    endpoint = "http://localhost:11434",
+    model = "deepseek-coder", -- Change this if you're using another model
+    timeout = 30000, -- Timeout in milliseconds
+    temperature = 0,
+    max_tokens = 8000,
+  },
   openai = {
     endpoint = "https://api.openai.com/v1",
     model = "gpt-4o",
