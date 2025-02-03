@@ -211,12 +211,20 @@ _See [config.lua#L9](./lua/avante/config.lua) for the full config_
 
 ```lua
 {
-  ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | string
+  ---@alias Provider "claude" | "openai" | "azure" | "gemini" | "cohere" | "copilot" | "ollama" | string
   provider = "claude", -- Recommend using Claude
   -- WARNING: Since auto-suggestions are a high-frequency operation and therefore expensive,
   -- currently designating it as `copilot` provider is dangerous because: https://github.com/yetone/avante.nvim/issues/1048
   -- Of course, you can reduce the request frequency by increasing `suggestion.debounce`.
   auto_suggestions_provider = "claude",
+  
+  -- Ollama configuration for local model support
+  ollama = {
+    endpoint = "http://localhost:11434", -- Ollama server endpoint
+    model = "deepseek-coder",           -- Default model to use
+    temperature = 0,                     -- Model temperature (0-1)
+    max_tokens = 8000,                  -- Maximum tokens to generate
+  },
   claude = {
     endpoint = "https://api.anthropic.com",
     model = "claude-3-5-sonnet-20241022",
@@ -330,221 +338,59 @@ _See [config.lua#L9](./lua/avante/config.lua) for the full config_
   },
 }
 ```
-## Blink.cmp users
-For blink cmp users (nvim-cmp alternative) view below instruction for configuration
-This is achieved but emulating nvim-cmp using blink.compat
-<details>
-  <summary>Lua</summary>
+
+### Using Local Models with Ollama
+
+avante.nvim now supports local language models through Ollama integration. This allows you to run AI-powered code assistance locally on your machine without relying on cloud services.
+
+#### Prerequisites
+
+1. Install Ollama from [ollama.ai](https://ollama.ai)
+2. Start the Ollama service
+3. Pull your desired model (e.g., `ollama pull deepseek-coder`)
+
+#### Configuration
+
+To use Ollama as your AI provider:
 
 ```lua
-      file_selector = {
-        --- @alias FileSelectorProvider "native" | "fzf" | "mini.pick" | "snacks" | "telescope" | string
-        provider = "fzf",
-        -- Options override for custom providers
-        provider_opts = {},
-      }
-```
-Choose a selector other that native, the default as that currently has an issue
-For lazyvim users copy the full config for blink.cmp from the website or extend the options
-```lua
-      compat = {
-        "avante_commands",
-        "avante_mentions",
-        "avante_files",
-      }
-```
-For other users just add a custom provider
-```lua
-      default = {
-        ...
-        "avante_commands",
-        "avante_mentions",
-        "avante_files",
-      }
-```
-```lua
-      providers = {
-        avante_commands = {
-          name = "avante_commands",
-          module = "blink.compat.source",
-          score_offset = 90, -- show at a higher priority than lsp
-          opts = {},
-        },
-        avante_files = {
-          name = "avante_files",
-          module = "blink.compat.source",
-          score_offset = 100, -- show at a higher priority than lsp
-          opts = {},
-        },
-        avante_mentions = {
-          name = "avante_mentions",
-          module = "blink.compat.source",
-          score_offset = 1000, -- show at a higher priority than lsp
-          opts = {},
-        }
-        ...
-    }
-```
-</details>
-
-## Usage
-
-Given its early stage, `avante.nvim` currently supports the following basic functionalities:
-
-> [!IMPORTANT]
->
-> Avante will only support Claude, and OpenAI (and its variants including azure)out-of-the-box due to its high code quality generation.
-> For all OpenAI-compatible providers, see [wiki](https://github.com/yetone/avante.nvim/wiki/Custom-providers) for more details.
-
-> [!IMPORTANT]
->
-> Due to the poor performance of other models, avante.nvim only recommends using the claude-3.5-sonnet model.
-> All features can only be guaranteed to work properly on the claude-3.5-sonnet model.
-> We do not accept changes to the code or prompts to accommodate other models. Otherwise, it will greatly increase our maintenance costs.
-> We hope everyone can understand. Thank you!
-
-> [!IMPORTANT]
->
-> For most consistency between neovim session, it is recommended to set the environment variables in your shell file.
-> By default, `Avante` will prompt you at startup to input the API key for the provider you have selected.
->
-> For Claude:
->
-> ```sh
-> export ANTHROPIC_API_KEY=your-api-key
-> ```
->
-> For OpenAI:
->
-> ```sh
-> export OPENAI_API_KEY=your-api-key
-> ```
->
-> For Azure OpenAI:
->
-> ```sh
-> export AZURE_OPENAI_API_KEY=your-api-key
-> ```
-
-1. Open a code file in Neovim.
-2. Use the `:AvanteAsk` command to query the AI about the code.
-3. Review the AI's suggestions.
-4. Apply the recommended changes directly to your code with a simple command or key binding.
-
-**Note**: The plugin is still under active development, and both its functionality and interface are subject to significant changes. Expect some rough edges and instability as the project evolves.
-
-## Key Bindings
-
-The following key bindings are available for use with `avante.nvim`:
-
-| Key Binding                               | Description                                  |
-| ----------------------------------------- | -------------------------------------------- |
-| <kbd>Leader</kbd><kbd>a</kbd><kbd>a</kbd> | show sidebar                                 |
-| <kbd>Leader</kbd><kbd>a</kbd><kbd>r</kbd> | refresh sidebar                              |
-| <kbd>Leader</kbd><kbd>a</kbd><kbd>f</kbd> | switch sidebar focus                         |
-| <kbd>Leader</kbd><kbd>a</kbd><kbd>e</kbd> | edit selected blocks                         |
-| <kbd>c</kbd><kbd>o</kbd>                  | choose ours                                  |
-| <kbd>c</kbd><kbd>t</kbd>                  | choose theirs                                |
-| <kbd>c</kbd><kbd>a</kbd>                  | choose all theirs                            |
-| <kbd>c</kbd><kbd>0</kbd>                  | choose none                                  |
-| <kbd>c</kbd><kbd>b</kbd>                  | choose both                                  |
-| <kbd>c</kbd><kbd>c</kbd>                  | choose cursor                                |
-| <kbd>]</kbd><kbd>x</kbd>                  | move to previous conflict                    |
-| <kbd>[</kbd><kbd>x</kbd>                  | move to next conflict                        |
-| <kbd>[</kbd><kbd>[</kbd>                  | jump to previous codeblocks (results window) |
-| <kbd>]</kbd><kbd>]</kbd>                  | jump to next codeblocks (results windows)    |
-
-> [!NOTE]
->
-> If you are using `lazy.nvim`, then all keymap here will be safely set, meaning if `<leader>aa` is already binded, then avante.nvim won't bind this mapping.
-> In this case, user will be responsible for setting up their own. See [notes on keymaps](https://github.com/yetone/avante.nvim/wiki#keymaps-and-api-i-guess) for more details.
-
-## Commands
-
-| Command | Description | Examples
-|---------|-------------| ------------------
-| `:AvanteAsk [question] [position]` | Ask AI about your code. Optional `position` set window position and `ask` enable/disable direct asking mode | `:AvanteAsk position=right Refactor this code here`
-| `:AvanteBuild` | Build dependencies for the project |
-| `:AvanteChat` | Start a chat session with AI about your codebase. Default is `ask`=false |
-| `:AvanteEdit` | Edit the selected code blocks |
-| `:AvanteFocus` | Switch focus to/from the sidebar |
-| `:AvanteRefresh` | Refresh all Avante windows |
-| `:AvanteSwitchProvider` | Switch AI provider (e.g. openai) |
-| `:AvanteShowRepoMap` | Show repo map for project's structure |
-| `:AvanteToggle` | Toggle the Avante sidebar |
-
-## Highlight Groups
-
-| Highlight Group             | Description                                   | Notes                                        |
-| --------------------------- | --------------------------------------------- | -------------------------------------------- |
-| AvanteTitle                 | Title                                         |                                              |
-| AvanteReversedTitle         | Used for rounded border                       |                                              |
-| AvanteSubtitle              | Selected code title                           |                                              |
-| AvanteReversedSubtitle      | Used for rounded border                       |                                              |
-| AvanteThirdTitle            | Prompt title                                  |                                              |
-| AvanteReversedThirdTitle    | Used for rounded border                       |                                              |
-| AvanteConflictCurrent       | Current conflict highlight                    | Default to `Config.highlights.diff.current`  |
-| AvanteConflictIncoming      | Incoming conflict highlight                   | Default to `Config.highlights.diff.incoming` |
-| AvanteConflictCurrentLabel  | Current conflict label highlight              | Default to shade of `AvanteConflictCurrent`  |
-| AvanteConflictIncomingLabel | Incoming conflict label highlight             | Default to shade of `AvanteConflictIncoming` |
-| AvantePopupHint             | Usage hints in popup menus                    |                                              |
-| AvanteInlineHint            | The end-of-line hint displayed in visual mode |                                              |
-
-See [highlights.lua](./lua/avante/highlights.lua) for more information
-
-## Custom prompts
-
-By default, `avante.nvim` provides three different modes to interact with: `planning`, `editing`, and `suggesting`, followed with three different prompts per mode.
-
-- `planning`: Used with `require("avante").toggle()` on sidebar
-- `editing`: Used with `require("avante").edit()` on selection codeblock
-- `suggesting`: Used with `require("avante").get_suggestion():suggest()` on Tab flow.
-
-Users can customize the system prompts via `Config.system_prompt`. We recommend calling this in a custom Autocmds depending on your need:
-
-```lua
-vim.api.nvim_create_autocmd("User", {
-  pattern = "ToggleMyPrompt",
-  callback = function() require("avante.config").override({system_prompt = "MY CUSTOM SYSTEM PROMPT"}) end,
+require('avante').setup({
+  provider = "ollama",           -- Set Ollama as the default provider
+  ollama = {
+    endpoint = "http://localhost:11434",  -- Ollama server endpoint
+    model = "deepseek-coder",            -- Your preferred model
+    temperature = 0,                      -- Model temperature (0-1)
+    max_tokens = 8000,                   -- Maximum tokens to generate
+  }
 })
-
-vim.keymap.set("n", "<leader>am", function() vim.api.nvim_exec_autocmds("User", { pattern = "ToggleMyPrompt" }) end, { desc = "avante: toggle my prompt" })
 ```
 
-If one wish to custom prompts for each mode, `avante.nvim` will check for project root based on the given buffer whether it contains
-the following patterns: `*.{mode}.avanterules`.
+#### Available Commands
 
-The rules for root hierarchy:
+- `:OllamaPull <model>` - Pull a new model from Ollama's model hub
+- `:OllamaListModels` - List all locally available models
 
-- lsp workspace folders
-- lsp root_dir
-- root pattern of filename of the current buffer
-- root pattern of cwd
+#### Status Line Integration
 
-<details>
+The plugin includes a status line component that shows the currently active model. If you're using lualine, it will automatically integrate. The status will show something like: `AI: ollama/deepseek-coder`
 
-  <summary>Example folder structure for custom prompt</summary>
+#### Supported Models
 
-If you have the following structure:
+While you can use any model available in Ollama, these are recommended for code assistance:
 
-```bash
-.
-├── .git/
-├── typescript.planning.avanterules
-├── snippets.editing.avanterules
-└── src/
+- `deepseek-coder` - Optimized for code understanding and generation
+- `codellama` - Meta's Code Llama model
+- `mistral` - General purpose model with good coding capabilities
+- `llama2` - Meta's general purpose model
 
-```
+#### Troubleshooting
 
-- `typescript.planning.avanterules` will be used for `planning` mode
-- `snippets.editing.avanterules`` will be used for `editing` mode
-- the default `suggesting` prompt from `avante.nvim` will be used for `suggesting` mode.
+If you encounter issues:
 
-</details>
-
-> [!important]
->
-> `*.avanterules` is a jinja template file, in which will be rendered using [minijinja](https://github.com/mitsuhiko/minijinja). See [templates](https://github.com/yetone/avante.nvim/blob/main/lua/avante/templates) for example on how to extend current templates.
+1. Ensure Ollama is running (`ollama serve`)
+2. Check if your model is downloaded (`:OllamaListModels`)
+3. Verify the endpoint in your configuration
+4. Check Neovim logs for any error messages
 
 ## TODOs
 

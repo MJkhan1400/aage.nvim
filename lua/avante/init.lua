@@ -6,6 +6,7 @@ local Selection = require("avante.selection")
 local Suggestion = require("avante.suggestion")
 local Config = require("avante.config")
 local Diff = require("avante.diff")
+local Status = require("avante.status")
 
 ---@class Avante
 local M = {
@@ -366,6 +367,19 @@ function M.setup(opts)
   require("avante.diff").setup()
   require("avante.providers").setup()
   require("avante.clipboard").setup()
+  require("avante.status").setup()  -- Initialize status line integration
+
+  -- Check if Ollama is available when it's selected
+  if Config.provider == "ollama" then
+    local Ollama = require("avante.providers.ollama")
+    Ollama.check_server(function(available)
+      if available then
+        Utils.info("Ollama server is available")
+      else
+        Utils.warn("Ollama server is not available. Please make sure Ollama is installed and running.")
+      end
+    end)
+  end
 
   -- setup helpers
   H.autocmds()
